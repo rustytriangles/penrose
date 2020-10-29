@@ -221,13 +221,11 @@ fn view(app: &App, model: &Model, frame: Frame) {
     let win = app.window_rect();
 
     for t in &model.tiles {
-
         let pts = t.get_points(0., 0., model.scale as f32);
         let points = (0..4).map(|i| {
             pt2(pts[i].0, pts[i].1)
         });
         draw.polygon()
-            .x(-win.w() * 0.25)
             .color(WHITE)
             .stroke(PINK)
             .stroke_weight(2.)
