@@ -23,10 +23,10 @@ impl Drawable for penrose::Kite {
     }
 }
 
-fn build_vertex1() -> Result<Vec<Box<dyn Drawable>>, i32> {
+fn build_vertex1(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
     let s5 = (5 as f64).sqrt();
     let phi = (1.+s5)/2.;
-    let d1 = penrose::Dart::new(-phi, 0., 0);
+    let d1 = penrose::Dart::new(x - phi, y, 0);
     let d2 = penrose::place_dart_edge(3, d1.edge_center(2)?, d1.edge_angle(2)?);
     let d3 = penrose::place_dart_edge(3, d2.edge_center(2)?, d2.edge_angle(2)?);
     let d4 = penrose::place_dart_edge(3, d3.edge_center(2)?, d3.edge_angle(2)?);
@@ -40,8 +40,8 @@ fn build_vertex1() -> Result<Vec<Box<dyn Drawable>>, i32> {
     Ok(tiles)
 }
 
-fn build_vertex2() -> Result<Vec<Box<dyn Drawable>>, i32> {
-    let d1 = penrose::Dart::new(0., 0., 0);
+fn build_vertex2(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
+    let d1 = penrose::Dart::new(x, y, 0);
     let k1 = penrose::place_kite_edge(2, d1.edge_center(4)?, d1.edge_angle(4)?);
     let k2 = penrose::place_kite_edge(4, k1.edge_center(1)?, k1.edge_angle(1)?);
 
@@ -52,11 +52,11 @@ fn build_vertex2() -> Result<Vec<Box<dyn Drawable>>, i32> {
     Ok(tiles)
 }
 
-fn build_vertex3() -> Result<Vec<Box<dyn Drawable>>, i32> {
+fn build_vertex3(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
     let s5 = (5 as f64).sqrt();
     let phi = (1.+s5)/2.;
 
-    let k1 = penrose::Kite::new(phi, 0., 0);
+    let k1 = penrose::Kite::new(x + phi, y, 0);
     let k2 = penrose::place_kite_edge(1, k1.edge_center(4)?, k1.edge_angle(4)?);
     let k3 = penrose::place_kite_edge(1, k2.edge_center(4)?, k2.edge_angle(4)?);
     let k4 = penrose::place_kite_edge(1, k3.edge_center(4)?, k3.edge_angle(4)?);
@@ -71,11 +71,11 @@ fn build_vertex3() -> Result<Vec<Box<dyn Drawable>>, i32> {
     Ok(tiles)
 }
 
-fn build_vertex4() -> Result<Vec<Box<dyn Drawable>>, i32> {
+fn build_vertex4(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
     let s5 = (5 as f64).sqrt();
     let phi = (1.+s5)/2.;
 
-    let d1 = penrose::Dart::new(-phi, 0., 0);
+    let d1 = penrose::Dart::new(x - phi, y, 0);
     let d2 = penrose::place_dart_edge(3, d1.edge_center(2)?, d1.edge_angle(2)?);
     let k1 = penrose::place_kite_edge(1, d2.edge_center(2)?, d2.edge_angle(2)?);
     let k2 = penrose::place_kite_edge(1, k1.edge_center(4)?, k1.edge_angle(4)?);
@@ -90,11 +90,11 @@ fn build_vertex4() -> Result<Vec<Box<dyn Drawable>>, i32> {
     Ok(tiles)
 }
 
-fn build_vertex5() -> Result<Vec<Box<dyn Drawable>>, i32> {
+fn build_vertex5(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
     let s5 = (5 as f64).sqrt();
     let phi = (1.+s5)/2.;
 
-    let k1 = penrose::Kite::new(-1., 0., 0);
+    let k1 = penrose::Kite::new(x - 1., y, 0);
     let d1 = penrose::place_dart_edge(4, k1.edge_center(2)?, k1.edge_angle(2)?);
     let k2 = penrose::place_kite_edge(1, d1.edge_center(3)?, d1.edge_angle(3)?);
     let k3 = penrose::place_kite_edge(1, k2.edge_center(4)?, k2.edge_angle(4)?);
@@ -109,10 +109,10 @@ fn build_vertex5() -> Result<Vec<Box<dyn Drawable>>, i32> {
     Ok(tiles)
 }
 
-fn build_vertex6() -> Result<Vec<Box<dyn Drawable>>, i32> {
+fn build_vertex6(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
     let s5 = (5 as f64).sqrt();
     let phi = (1.+s5)/2.;
-    let d1 = penrose::Dart::new(-phi, 0., 0);
+    let d1 = penrose::Dart::new(x - phi, y, 0);
     let k1 = penrose::place_kite_edge(4, d1.edge_center(2)?, d1.edge_angle(2)?);
     let k2 = penrose::place_kite_edge(2, k1.edge_center(3)?, k1.edge_angle(3)?);
     let k3 = penrose::place_kite_edge(4, k2.edge_center(1)?, k2.edge_angle(1)?);
@@ -127,13 +127,13 @@ fn build_vertex6() -> Result<Vec<Box<dyn Drawable>>, i32> {
     Ok(tiles)
 }
 
-fn build_vertex7() -> Result<Vec<Box<dyn Drawable>>, i32> {
+fn build_vertex7(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
     let s5 = (5 as f64).sqrt();
     let phi = (1.+s5)/2.;
     let k = (2.+s5) / (1.+s5);
     let p = (10. + (20. as f64).sqrt()).sqrt()/4.;
 
-    let k1 = penrose::Kite::new(k-1.,-p, 108);
+    let k1 = penrose::Kite::new(x + k - 1., y - p, 108);
     let k2 = penrose::place_kite_edge(3, k1.edge_center(2)?, k1.edge_angle(2)?);
     let d1 = penrose::place_dart_edge(4, k2.edge_center(2)?, k2.edge_angle(2)?);
     let d2 = penrose::place_dart_edge(2, d1.edge_center(3)?, d1.edge_angle(3)?);
@@ -147,39 +147,69 @@ fn build_vertex7() -> Result<Vec<Box<dyn Drawable>>, i32> {
 }
 
 fn main() {
-    nannou::sketch(view).run()
+    nannou::app(model)
+        .event(event)
+        .update(update)
+        .view(view)
+        .run();
 }
 
-fn view(app: &App, frame: Frame) {
-    let mut tiles: Vec<Box<dyn Drawable>> = Vec::new();
-    // match build_vertex1() {
-    //     Ok(t) => tiles = t,
-    //     Err(_) => println!("Error building vertex 2"),
-    // }
-    // match build_vertex2() {
-    //     Ok(t) => for o in t { tiles.push(o) },
-    //     Err(_) => println!("Error building vertex 2"),
-    // }
-    // match build_vertex3() {
-    //     Ok(t) => for o in t { tiles.push(o) },
-    //     Err(_) => println!("Error building vertex 2"),
-    // }
-    // match build_vertex4() {
-    //     Ok(t) => for o in t { tiles.push(o) },
-    //     Err(_) => println!("Error building vertex 2"),
-    // }
-    // match build_vertex5() {
-    //     Ok(t) => for o in t { tiles.push(o) },
-    //     Err(_) => println!("Error building vertex 2"),
-    // }
-    // match build_vertex6() {
-    //     Ok(t) => for o in t { tiles.push(o) },
-    //     Err(_) => println!("Error building vertex 2"),
-    // }
-    // match build_vertex7() {
-    //     Ok(t) => for o in t { tiles.push(o) },
-    //     Err(_) => println!("Error building vertex 2"),
-    // }
+struct Model {
+    tiles: Vec<Box<dyn Drawable>>,
+    current_point: Point2,
+    scale: f64,
+    vertex_type: i32,
+}
+
+fn model(app: &App) -> Model {
+    app.new_window()
+        .size(720, 720)
+        .event(window_event)
+        .raw_event(raw_window_event)
+        .key_pressed(key_pressed)
+        .key_released(key_released)
+        .mouse_moved(mouse_moved)
+        .mouse_pressed(mouse_pressed)
+        .mouse_released(mouse_released)
+        .mouse_wheel(mouse_wheel)
+        .mouse_entered(mouse_entered)
+        .mouse_exited(mouse_exited)
+        .touch(touch)
+        .touchpad_pressure(touchpad_pressure)
+        .moved(window_moved)
+        .resized(window_resized)
+        .hovered_file(hovered_file)
+        .hovered_file_cancelled(hovered_file_cancelled)
+        .dropped_file(dropped_file)
+        .focused(window_focused)
+        .unfocused(window_unfocused)
+        .closed(window_closed)
+        .build()
+        .unwrap();
+    Model { tiles: Vec::new(),
+            current_point: pt2(0.,0.),
+            scale: 25.,
+            vertex_type: 1,
+    }
+}
+
+fn event(_app: &App, _model: &mut Model, event: Event) {
+    match event {
+        Event::WindowEvent {
+            id: _,
+            //raw: _,
+            simple: _,
+        } => {}
+        Event::DeviceEvent(_device_id, _event) => {}
+        Event::Update(_dt) => {}
+        Event::Suspended => {}
+        Event::Resumed => {}
+    }
+}
+
+fn update(_app: &App, _model: &mut Model, _update: Update) {}
+
+fn view(app: &App, model: &Model, frame: Frame) {
 
     // Begin drawing
     let draw = app.draw();
@@ -190,9 +220,9 @@ fn view(app: &App, frame: Frame) {
     // Draw a purple triangle in the top left half of the window.
     let win = app.window_rect();
 
-    for t in tiles {
+    for t in &model.tiles {
 
-        let pts = t.get_points(0., 0., 25.);
+        let pts = t.get_points(0., 0., model.scale as f32);
         let points = (0..4).map(|i| {
             pt2(pts[i].0, pts[i].1)
         });
@@ -208,3 +238,92 @@ fn view(app: &App, frame: Frame) {
     // Write the result of our drawing to the window's frame.
     draw.to_frame(app, &frame).unwrap();
 }
+
+fn window_event(_app: &App, model: &mut Model, event: WindowEvent) {
+    match event {
+        KeyPressed(key) => {
+            match key {
+                nannou::event::Key::Key1 => model.vertex_type = 1,
+                nannou::event::Key::Key2 => model.vertex_type = 2,
+                nannou::event::Key::Key3 => model.vertex_type = 3,
+                nannou::event::Key::Key4 => model.vertex_type = 4,
+                nannou::event::Key::Key5 => model.vertex_type = 5,
+                nannou::event::Key::Key6 => model.vertex_type = 6,
+                nannou::event::Key::Key7 => model.vertex_type = 7,
+                _ => println!("KeyPressed = {:?}", key),
+            }
+        }
+        KeyReleased(_key) => {}
+        MouseMoved(pos) => { model.current_point = pos }
+        MousePressed(button) => {
+            let x = model.current_point.x as f64 / model.scale;
+            let y = model.current_point.y as f64 / model.scale;
+            let res = match model.vertex_type {
+                1 => build_vertex1(x, y),
+                2 => build_vertex2(x, y),
+                3 => build_vertex3(x, y),
+                4 => build_vertex4(x, y),
+                5 => build_vertex5(x, y),
+                6 => build_vertex6(x, y),
+                7 => build_vertex7(x, y),
+                _ => Err(666),
+            };
+            match res {
+                Ok(t) => for o in t { model.tiles.push(o) },
+                Err(_) => println!("Error building vertex 2"),
+            }
+        }
+        MouseReleased(_button) => {}
+        MouseEntered => {}
+        MouseExited => {}
+        MouseWheel(_amount, _phase) => {}
+        Moved(_pos) => {}
+        Resized(_size) => {}
+        Touch(_touch) => {}
+        TouchPressure(_pressure) => {}
+        HoveredFile(_path) => {}
+        DroppedFile(_path) => {}
+        HoveredFileCancelled => {}
+        Focused => {}
+        Unfocused => {}
+        Closed => {}
+    }
+}
+
+fn raw_window_event(_app: &App, _model: &mut Model, _event: &nannou::winit::event::WindowEvent) {}
+
+fn key_pressed(_app: &App, _model: &mut Model, _key: Key) {}
+
+fn key_released(_app: &App, _model: &mut Model, _key: Key) {}
+
+fn mouse_moved(_app: &App, _model: &mut Model, _pos: Point2) {}
+
+fn mouse_pressed(_app: &App, _model: &mut Model, _button: MouseButton) {}
+
+fn mouse_released(_app: &App, _model: &mut Model, _button: MouseButton) {}
+
+fn mouse_wheel(_app: &App, _model: &mut Model, _dt: MouseScrollDelta, _phase: TouchPhase) {}
+
+fn mouse_entered(_app: &App, _model: &mut Model) {}
+
+fn mouse_exited(_app: &App, _model: &mut Model) {}
+
+fn touch(_app: &App, _model: &mut Model, _touch: TouchEvent) {}
+
+fn touchpad_pressure(_app: &App, _model: &mut Model, _pressure: TouchpadPressure) {}
+
+fn window_moved(_app: &App, _model: &mut Model, _pos: Point2) {}
+
+fn window_resized(_app: &App, _model: &mut Model, _dim: Vector2) {}
+
+fn window_focused(_app: &App, _model: &mut Model) {}
+
+fn window_unfocused(_app: &App, _model: &mut Model) {}
+
+fn window_closed(_app: &App, _model: &mut Model) {}
+
+fn hovered_file(_app: &App, _model: &mut Model, _path: std::path::PathBuf) {}
+
+fn hovered_file_cancelled(_app: &App, _model: &mut Model) {}
+
+fn dropped_file(_app: &App, _model: &mut Model, _path: std::path::PathBuf) {}
