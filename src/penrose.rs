@@ -39,6 +39,18 @@ impl Dart {
         return Dart{ cx: (self.cx + ox), cy: (self.cy + oy), angle: self.angle };
     }
 
+    pub fn polygon(&self, xoff: f32, yoff: f32, scale: f32) -> Vec<(f32,f32)> {
+        let pts = self.geometry();
+        let xoff64 = xoff as f64;
+        let yoff64 = yoff as f64;
+        let scale64 = scale as f64;
+
+        vec![( (pts[2*0+0]*scale64 + xoff64) as f32, (pts[2*0+1]*scale64 + yoff64) as f32 ),
+             ( (pts[2*1+0]*scale64 + xoff64) as f32, (pts[2*1+1]*scale64 + yoff64) as f32 ),
+             ( (pts[2*2+0]*scale64 + xoff64) as f32, (pts[2*2+1]*scale64 + yoff64) as f32 ),
+             ( (pts[2*3+0]*scale64 + xoff64) as f32, (pts[2*3+1]*scale64 + yoff64) as f32 )]
+    }
+
     pub fn edge_angle(&self, e: i32) -> Result<i32, i32> {
         match e {
             1 => Ok((252 + self.angle)%360),
@@ -190,6 +202,18 @@ impl Kite {
 
     pub fn translate(&self, ox: f64, oy: f64) -> Kite {
         return Kite{ cx: (self.cx + ox), cy: (self.cy + oy), angle: self.angle };
+    }
+
+    pub fn polygon(&self, xoff: f32, yoff: f32, scale: f32) -> Vec<(f32,f32)> {
+        let pts = self.geometry();
+        let xoff64 = xoff as f64;
+        let yoff64 = yoff as f64;
+        let scale64 = scale as f64;
+
+        vec![( (pts[2*0+0]*scale64 + xoff64) as f32, (pts[2*0+1]*scale64 + yoff64) as f32 ),
+             ( (pts[2*1+0]*scale64 + xoff64) as f32, (pts[2*1+1]*scale64 + yoff64) as f32 ),
+             ( (pts[2*2+0]*scale64 + xoff64) as f32, (pts[2*2+1]*scale64 + yoff64) as f32 ),
+             ( (pts[2*3+0]*scale64 + xoff64) as f32, (pts[2*3+1]*scale64 + yoff64) as f32 )]
     }
 
     pub fn edge_angle(&self, e: i32) -> Result<i32, i32> {
