@@ -32,11 +32,11 @@ impl Dart {
     }
 
     pub fn rotate(&self, angle: i32) -> Dart {
-        return Dart{ cx: self.cx, cy: self.cy, angle: (self.angle + angle)%360 };
+        Dart{ cx: self.cx, cy: self.cy, angle: (self.angle + angle)%360 }
     }
 
     pub fn translate(&self, ox: f64, oy: f64) -> Dart {
-        return Dart{ cx: (self.cx + ox), cy: (self.cy + oy), angle: self.angle };
+        Dart{ cx: (self.cx + ox), cy: (self.cy + oy), angle: self.angle }
     }
 
     pub fn polygon(&self, xoff: f32, yoff: f32, scale: f32) -> Vec<(f32,f32)> {
@@ -91,21 +91,11 @@ impl Dart {
         Ok(( (x1,y1), (x2,y2) ))
     }
 
-    // pub fn as_polygon(&self, e: i32) -> Polygon<f32> {
-    //     let pts = self.geometry();
-    //     let poly_pts = [pt2(pts[0] as f32, pts[1] as f32),
-    //                     pt2(pts[2] as f32, pts[3] as f32),
-    //                     pt2(pts[4] as f32, pts[5] as f32),
-    //                     pt2(pts[6] as f32, pts[7] as f32)];
-    //     let result = new Polygon(poly_pts);
-    //     result
-    // }
-
     fn geometry(&self) ->  Box<[f64]> {
         let angle_in_radians = self.angle as f64 * std::f64::consts::PI / 180.;
         let c = angle_in_radians.cos();
         let s = angle_in_radians.sin();
-        let s5 = (5 as f64).sqrt();
+        let s5 = 5_f64.sqrt();
         let phi = (1.+s5)/2.;
         let h = (5.+2.*s5).sqrt()/2.;
 
@@ -127,7 +117,7 @@ impl Dart {
 }
 
 pub fn place_dart_edge(e: i32, pt: (f64,f64), edge_angle: i32) -> Dart {
-    let s5 = (5 as f64).sqrt();
+    let s5 = 5_f64.sqrt();
     let phi = (1.+s5)/2.;
     let h = (5.+2.*s5).sqrt()/2.;
 
@@ -256,19 +246,11 @@ impl Kite {
         Ok(( (x1,y1), (x2,y2) ))
     }
 
-    // pub fn as_polygon(&self, e: i32) -> Polygon<f32> {
-    //     let pts = self.geometry();
-    //     [pt2(pts[0] as f32, pts[1] as f32),
-    //      pt2(pts[2] as f32, pts[3] as f32),
-    //      pt2(pts[4] as f32, pts[5] as f32),
-    //      pt2(pts[6] as f32, pts[7] as f32)]
-    // }
-
     fn geometry(&self) ->  Box<[f64]> {
         let angle_in_radians = self.angle as f64 * std::f64::consts::PI / 180.;
         let c = angle_in_radians.cos();
         let s = angle_in_radians.sin();
-        let s5 = (5 as f64).sqrt();
+        let s5 = 5_f64.sqrt();
         let phi = (1.+s5)/2.;
         let h = (5.+2.*s5).sqrt()/2.;
 
@@ -290,7 +272,7 @@ impl Kite {
 }
 
 pub fn place_kite_edge(e: i32, pt: (f64,f64), edge_angle: i32) -> Kite {
-    let s5 = (5 as f64).sqrt();
+    let s5 = 5_f64.sqrt();
     let phi = (1.+s5)/2.;
     let h = (5.+2.*s5).sqrt()/2.;
 
@@ -682,7 +664,7 @@ mod tests {
     //////////////////////////////////////
     #[test]
     fn test_vertex1() {
-        let s5 = (5 as f64).sqrt();
+        let s5 = 5_f64.sqrt();
         let phi = (1.+s5)/2.;
 
         let d1 = Dart::new(-phi, 0., 0);
@@ -725,7 +707,7 @@ mod tests {
             let k1 = place_kite_edge(2, d1.edge_center(4)?, d1.edge_angle(4)?);
             let k2 = place_kite_edge(4, k1.edge_center(1)?, k1.edge_angle(1)?);
 
-            let s5 = (5 as f64).sqrt();
+            let s5 = 5_f64.sqrt();
             let k = (2.+s5) / (1.+s5);
             let p = (10. + (20. as f64).sqrt()).sqrt()/4.;
 
@@ -747,7 +729,7 @@ mod tests {
 
     #[test]
     fn test_vertex3() {
-        let s5 = (5 as f64).sqrt();
+        let s5 = 5_f64.sqrt();
         let phi = (1.+s5)/2.;
 
         let k1 = Kite::new(phi, 0., 0);
@@ -785,7 +767,7 @@ mod tests {
 
     #[test]
     fn test_vertex4() {
-        let s5 = (5 as f64).sqrt();
+        let s5 = 5_f64.sqrt();
         let phi = (1.+s5)/2.;
 
         let d1 = Dart::new(-phi, 0., 0);
@@ -823,7 +805,7 @@ mod tests {
 
     #[test]
     fn test_vertex5() {
-        let s5 = (5 as f64).sqrt();
+        let s5 = 5_f64.sqrt();
         let phi = (1.+s5)/2.;
 
         let k1 = Kite::new(-1., 0., 0);
@@ -861,7 +843,7 @@ mod tests {
 
     #[test]
     fn test_vertex6() {
-        let s5 = (5 as f64).sqrt();
+        let s5 = 5_f64.sqrt();
         let phi = (1.+s5)/2.;
 
         let d1 = Dart::new(-phi, 0., 0);
@@ -899,7 +881,7 @@ mod tests {
 
     #[test]
     fn test_vertex7() {
-        let s5 = (5 as f64).sqrt();
+        let s5 = 5_f64.sqrt();
         let phi = (1.+s5)/2.;
         let k = (2.+s5) / (1.+s5);
         let p = (10. + (20. as f64).sqrt()).sqrt()/4.;

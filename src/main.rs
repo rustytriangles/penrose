@@ -5,32 +5,49 @@ use nannou::prelude::*;
 #[path = "penrose.rs"]
 mod penrose;
 
+use penrose::*;
+
 trait Drawable {
-    fn get_points(&self, xoff: f32, yoff: f32, scale: f32) -> Vec<(f32,f32)> ;
+    fn draw(&self, draw: &nannou::draw::Draw, xoff: f32, yoff: f32, scale: f32);
 }
 
-impl Drawable for penrose::Dart {
-    fn get_points(&self, xoff: f32, yoff: f32, scale: f32) -> Vec<(f32,f32)> {
+impl Drawable for Dart {
+    fn draw(&self, draw: &nannou::draw::Draw, xoff: f32, yoff: f32, scale: f32) {
         let pts = self.polygon(xoff, yoff, scale);
-        pts
+        let points = (0..4).map(|i| {
+            pt2(pts[i].0, pts[i].1)
+        });
+        draw.polygon()
+            .color(WHITE)
+            .stroke(PINK)
+            .stroke_weight(2.)
+            .join_miter()
+            .points(points);
     }
 }
 
-impl Drawable for penrose::Kite {
-    fn get_points(&self, xoff: f32, yoff: f32, scale: f32) -> Vec<(f32,f32)> {
+impl Drawable for Kite {
+    fn draw(&self, draw: &nannou::draw::Draw, xoff: f32, yoff: f32, scale: f32) {
         let pts = self.polygon(xoff, yoff, scale);
-        pts
+        let points = (0..4).map(|i| {
+            pt2(pts[i].0, pts[i].1)
+        });
+        draw.polygon()
+            .color(WHITE)
+            .stroke(PINK)
+            .stroke_weight(2.)
+            .join_miter()
+            .points(points);
     }
 }
 
-fn build_vertex1(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
-    let s5 = (5 as f64).sqrt();
-    let phi = (1.+s5)/2.;
-    let d1 = penrose::Dart::new(x - phi, y, 0);
-    let d2 = penrose::place_dart_edge(3, d1.edge_center(2)?, d1.edge_angle(2)?);
-    let d3 = penrose::place_dart_edge(3, d2.edge_center(2)?, d2.edge_angle(2)?);
-    let d4 = penrose::place_dart_edge(3, d3.edge_center(2)?, d3.edge_angle(2)?);
-    let d5 = penrose::place_dart_edge(3, d4.edge_center(2)?, d4.edge_angle(2)?);
+fn build_vertex1(x: f64, y: f64, angle: i32) -> Result<Vec<Box<dyn Drawable>>, i32> {
+    let phi = (1. + 5_f64.sqrt())/2.;
+    let d1 = Dart::new(x - phi, y, angle);
+    let d2 = place_dart_edge(3, d1.edge_center(2)?, d1.edge_angle(2)?);
+    let d3 = place_dart_edge(3, d2.edge_center(2)?, d2.edge_angle(2)?);
+    let d4 = place_dart_edge(3, d3.edge_center(2)?, d3.edge_angle(2)?);
+    let d5 = place_dart_edge(3, d4.edge_center(2)?, d4.edge_angle(2)?);
     let mut tiles: Vec<Box<dyn Drawable>> = Vec::new();
     tiles.push(Box::new(d1));
     tiles.push(Box::new(d2));
@@ -40,10 +57,10 @@ fn build_vertex1(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
     Ok(tiles)
 }
 
-fn build_vertex2(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
-    let d1 = penrose::Dart::new(x, y, 0);
-    let k1 = penrose::place_kite_edge(2, d1.edge_center(4)?, d1.edge_angle(4)?);
-    let k2 = penrose::place_kite_edge(4, k1.edge_center(1)?, k1.edge_angle(1)?);
+fn build_vertex2(x: f64, y: f64, angle: i32) -> Result<Vec<Box<dyn Drawable>>, i32> {
+    let d1 = Dart::new(x, y, angle);
+    let k1 = place_kite_edge(2, d1.edge_center(4)?, d1.edge_angle(4)?);
+    let k2 = place_kite_edge(4, k1.edge_center(1)?, k1.edge_angle(1)?);
 
     let mut tiles: Vec<Box<dyn Drawable>> = Vec::new();
     tiles.push(Box::new(d1));
@@ -52,15 +69,14 @@ fn build_vertex2(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
     Ok(tiles)
 }
 
-fn build_vertex3(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
-    let s5 = (5 as f64).sqrt();
-    let phi = (1.+s5)/2.;
+fn build_vertex3(x: f64, y: f64, angle: i32) -> Result<Vec<Box<dyn Drawable>>, i32> {
+    let phi = (1. + 5_f64.sqrt())/2.;
 
-    let k1 = penrose::Kite::new(x + phi, y, 0);
-    let k2 = penrose::place_kite_edge(1, k1.edge_center(4)?, k1.edge_angle(4)?);
-    let k3 = penrose::place_kite_edge(1, k2.edge_center(4)?, k2.edge_angle(4)?);
-    let k4 = penrose::place_kite_edge(1, k3.edge_center(4)?, k3.edge_angle(4)?);
-    let k5 = penrose::place_kite_edge(1, k4.edge_center(4)?, k4.edge_angle(4)?);
+    let k1 = Kite::new(x + phi, y, angle);
+    let k2 = place_kite_edge(1, k1.edge_center(4)?, k1.edge_angle(4)?);
+    let k3 = place_kite_edge(1, k2.edge_center(4)?, k2.edge_angle(4)?);
+    let k4 = place_kite_edge(1, k3.edge_center(4)?, k3.edge_angle(4)?);
+    let k5 = place_kite_edge(1, k4.edge_center(4)?, k4.edge_angle(4)?);
 
     let mut tiles: Vec<Box<dyn Drawable>> = Vec::new();
     tiles.push(Box::new(k1));
@@ -71,15 +87,14 @@ fn build_vertex3(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
     Ok(tiles)
 }
 
-fn build_vertex4(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
-    let s5 = (5 as f64).sqrt();
-    let phi = (1.+s5)/2.;
+fn build_vertex4(x: f64, y: f64, angle: i32) -> Result<Vec<Box<dyn Drawable>>, i32> {
+    let phi = (1. + 5_f64.sqrt())/2.;
 
-    let d1 = penrose::Dart::new(x - phi, y, 0);
-    let d2 = penrose::place_dart_edge(3, d1.edge_center(2)?, d1.edge_angle(2)?);
-    let k1 = penrose::place_kite_edge(1, d2.edge_center(2)?, d2.edge_angle(2)?);
-    let k2 = penrose::place_kite_edge(1, k1.edge_center(4)?, k1.edge_angle(4)?);
-    let d3 = penrose::place_dart_edge(3, k2.edge_center(4)?, k2.edge_angle(4)?);
+    let d1 = Dart::new(x - phi, y, angle);
+    let d2 = place_dart_edge(3, d1.edge_center(2)?, d1.edge_angle(2)?);
+    let k1 = place_kite_edge(1, d2.edge_center(2)?, d2.edge_angle(2)?);
+    let k2 = place_kite_edge(1, k1.edge_center(4)?, k1.edge_angle(4)?);
+    let d3 = place_dart_edge(3, k2.edge_center(4)?, k2.edge_angle(4)?);
 
     let mut tiles: Vec<Box<dyn Drawable>> = Vec::new();
     tiles.push(Box::new(d1));
@@ -90,15 +105,13 @@ fn build_vertex4(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
     Ok(tiles)
 }
 
-fn build_vertex5(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
-    let s5 = (5 as f64).sqrt();
-    let phi = (1.+s5)/2.;
+fn build_vertex5(x: f64, y: f64, angle: i32) -> Result<Vec<Box<dyn Drawable>>, i32> {
 
-    let k1 = penrose::Kite::new(x - 1., y, 0);
-    let d1 = penrose::place_dart_edge(4, k1.edge_center(2)?, k1.edge_angle(2)?);
-    let k2 = penrose::place_kite_edge(1, d1.edge_center(3)?, d1.edge_angle(3)?);
-    let k3 = penrose::place_kite_edge(1, k2.edge_center(4)?, k2.edge_angle(4)?);
-    let d2 = penrose::place_dart_edge(2, k3.edge_center(4)?, k3.edge_angle(4)?);
+    let k1 = Kite::new(x - 1., y, angle);
+    let d1 = place_dart_edge(4, k1.edge_center(2)?, k1.edge_angle(2)?);
+    let k2 = place_kite_edge(1, d1.edge_center(3)?, d1.edge_angle(3)?);
+    let k3 = place_kite_edge(1, k2.edge_center(4)?, k2.edge_angle(4)?);
+    let d2 = place_dart_edge(2, k3.edge_center(4)?, k3.edge_angle(4)?);
 
     let mut tiles: Vec<Box<dyn Drawable>> = Vec::new();
     tiles.push(Box::new(k1));
@@ -109,14 +122,14 @@ fn build_vertex5(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
     Ok(tiles)
 }
 
-fn build_vertex6(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
-    let s5 = (5 as f64).sqrt();
-    let phi = (1.+s5)/2.;
-    let d1 = penrose::Dart::new(x - phi, y, 0);
-    let k1 = penrose::place_kite_edge(4, d1.edge_center(2)?, d1.edge_angle(2)?);
-    let k2 = penrose::place_kite_edge(2, k1.edge_center(3)?, k1.edge_angle(3)?);
-    let k3 = penrose::place_kite_edge(4, k2.edge_center(1)?, k2.edge_angle(1)?);
-    let k4 = penrose::place_kite_edge(2, k3.edge_center(3)?, k3.edge_angle(3)?);
+fn build_vertex6(x: f64, y: f64, angle: i32) -> Result<Vec<Box<dyn Drawable>>, i32> {
+    let phi = (1. + 5_f64.sqrt())/2.;
+
+    let d1 = Dart::new(x - phi, y, angle);
+    let k1 = place_kite_edge(4, d1.edge_center(2)?, d1.edge_angle(2)?);
+    let k2 = place_kite_edge(2, k1.edge_center(3)?, k1.edge_angle(3)?);
+    let k3 = place_kite_edge(4, k2.edge_center(1)?, k2.edge_angle(1)?);
+    let k4 = place_kite_edge(2, k3.edge_center(3)?, k3.edge_angle(3)?);
 
     let mut tiles: Vec<Box<dyn Drawable>> = Vec::new();
     tiles.push(Box::new(d1));
@@ -127,16 +140,16 @@ fn build_vertex6(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
     Ok(tiles)
 }
 
-fn build_vertex7(x: f64, y: f64) -> Result<Vec<Box<dyn Drawable>>, i32> {
-    let s5 = (5 as f64).sqrt();
+fn build_vertex7(x: f64, y: f64, angle: i32) -> Result<Vec<Box<dyn Drawable>>, i32> {
+    let s5 = 5_f64.sqrt();
     let phi = (1.+s5)/2.;
     let k = (2.+s5) / (1.+s5);
-    let p = (10. + (20. as f64).sqrt()).sqrt()/4.;
+    let p = (10. + 20_f64.sqrt()).sqrt()/4.;
 
-    let k1 = penrose::Kite::new(x + k - 1., y - p, 108);
-    let k2 = penrose::place_kite_edge(3, k1.edge_center(2)?, k1.edge_angle(2)?);
-    let d1 = penrose::place_dart_edge(4, k2.edge_center(2)?, k2.edge_angle(2)?);
-    let d2 = penrose::place_dart_edge(2, d1.edge_center(3)?, d1.edge_angle(3)?);
+    let k1 = Kite::new(x + k - 1., y - p, angle);
+    let k2 = place_kite_edge(3, k1.edge_center(2)?, k1.edge_angle(2)?);
+    let d1 = place_dart_edge(4, k2.edge_center(2)?, k2.edge_angle(2)?);
+    let d2 = place_dart_edge(2, d1.edge_center(3)?, d1.edge_angle(3)?);
 
     let mut tiles: Vec<Box<dyn Drawable>> = Vec::new();
     tiles.push(Box::new(k1));
@@ -159,6 +172,7 @@ struct Model {
     current_point: Point2,
     scale: f64,
     vertex_type: i32,
+    angle: i32,
 }
 
 fn model(app: &App) -> Model {
@@ -190,6 +204,7 @@ fn model(app: &App) -> Model {
             current_point: pt2(0.,0.),
             scale: 25.,
             vertex_type: 1,
+            angle: 0,
     }
 }
 
@@ -212,58 +227,52 @@ fn update(_app: &App, _model: &mut Model, _update: Update) {}
 fn view(app: &App, model: &Model, frame: Frame) {
 
     // Begin drawing
-    let draw = app.draw();
+    let draw: nannou::draw::Draw = app.draw();
 
     // Clear the background to blue.
     draw.background().color(CORNFLOWERBLUE);
 
-    // Draw a purple triangle in the top left half of the window.
-    let win = app.window_rect();
-
     for t in &model.tiles {
-        let pts = t.get_points(0., 0., model.scale as f32);
-        let points = (0..4).map(|i| {
-            pt2(pts[i].0, pts[i].1)
-        });
-        draw.polygon()
-            .color(WHITE)
-            .stroke(PINK)
-            .stroke_weight(2.)
-            .join_miter()
-            .points(points);
+        t.draw(&draw, 0., 0., model.scale as f32);
     }
 
     // Write the result of our drawing to the window's frame.
     draw.to_frame(app, &frame).unwrap();
 }
 
+use nannou::event::*;
+
 fn window_event(_app: &App, model: &mut Model, event: WindowEvent) {
     match event {
         KeyPressed(key) => {
             match key {
-                nannou::event::Key::Key1 => model.vertex_type = 1,
-                nannou::event::Key::Key2 => model.vertex_type = 2,
-                nannou::event::Key::Key3 => model.vertex_type = 3,
-                nannou::event::Key::Key4 => model.vertex_type = 4,
-                nannou::event::Key::Key5 => model.vertex_type = 5,
-                nannou::event::Key::Key6 => model.vertex_type = 6,
-                nannou::event::Key::Key7 => model.vertex_type = 7,
+                Key::Key1 => model.vertex_type = 1,
+                Key::Key2 => model.vertex_type = 2,
+                Key::Key3 => model.vertex_type = 3,
+                Key::Key4 => model.vertex_type = 4,
+                Key::Key5 => model.vertex_type = 5,
+                Key::Key6 => model.vertex_type = 6,
+                Key::Key7 => model.vertex_type = 7,
+                Key::Up => { model.scale = 2.*model.scale.min(100.) },
+                Key::Down => { model.scale = 0.5*model.scale.max(1.) },
+                Key::Left => { model.angle = (model.angle + 72) % 360 },
+                Key::Right => { model.angle = (model.angle + 360 - 72) % 360 },
                 _ => println!("KeyPressed = {:?}", key),
             }
         }
         KeyReleased(_key) => {}
         MouseMoved(pos) => { model.current_point = pos }
-        MousePressed(button) => {
+        MousePressed(_button) => {
             let x = model.current_point.x as f64 / model.scale;
             let y = model.current_point.y as f64 / model.scale;
             let res = match model.vertex_type {
-                1 => build_vertex1(x, y),
-                2 => build_vertex2(x, y),
-                3 => build_vertex3(x, y),
-                4 => build_vertex4(x, y),
-                5 => build_vertex5(x, y),
-                6 => build_vertex6(x, y),
-                7 => build_vertex7(x, y),
+                1 => build_vertex1(x, y, model.angle),
+                2 => build_vertex2(x, y, model.angle),
+                3 => build_vertex3(x, y, model.angle),
+                4 => build_vertex4(x, y, model.angle),
+                5 => build_vertex5(x, y, model.angle),
+                6 => build_vertex6(x, y, model.angle),
+                7 => build_vertex7(x, y, model.angle),
                 _ => Err(666),
             };
             match res {
