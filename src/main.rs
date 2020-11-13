@@ -41,6 +41,14 @@ impl Drawable for Kite {
     }
 }
 
+fn build_tile(tile: &penrose::Tile, x: f64, y: f64, angle: i32) -> Result<Box<dyn Drawable>, i32> {
+    match tile {
+        penrose::Tile::DART => Ok(Box::new(Dart::new(x, y, angle))),
+        penrose::Tile::KITE => Ok(Box::new(Kite::new(x, y, angle))),
+        _ => Err(666),
+    }
+}
+
 fn build_vertex1(x: f64, y: f64, angle: i32) -> Result<Vec<Box<dyn Drawable>>, i32> {
     let phi = (1. + 5_f64.sqrt())/2.;
     let d1 = Dart::new(x - phi, y, angle);
@@ -171,7 +179,8 @@ struct Model {
     tiles: Vec<Box<dyn Drawable>>,
     current_point: Point2,
     scale: f64,
-    vertex_type: i32,
+    //    vertex_type: i32,
+    next_tile: penrose::Tile,
     angle: i32,
 }
 
@@ -203,7 +212,8 @@ fn model(app: &App) -> Model {
     Model { tiles: Vec::new(),
             current_point: pt2(0.,0.),
             scale: 25.,
-            vertex_type: 1,
+            //            vertex_type: 1,
+            next_tile: penrose::Tile::DART,
             angle: 0,
     }
 }
@@ -236,6 +246,14 @@ fn view(app: &App, model: &Model, frame: Frame) {
         t.draw(&draw, 0., 0., model.scale as f32);
     }
 
+    let x = model.current_point.x as f64 / model.scale;
+    let y = model.current_point.y as f64 / model.scale;
+    let tmp = build_tile(&model.next_tile, x, y, model.angle);
+    match tmp {
+        Ok(t) => t.draw(&draw, 0., 0., model.scale as f32),
+        Err(_) => println!("Error building vertex 2"),
+    }
+
     // Write the result of our drawing to the window's frame.
     draw.to_frame(app, &frame).unwrap();
 }
@@ -246,17 +264,19 @@ fn window_event(_app: &App, model: &mut Model, event: WindowEvent) {
     match event {
         KeyPressed(key) => {
             match key {
-                Key::Key1 => model.vertex_type = 1,
-                Key::Key2 => model.vertex_type = 2,
-                Key::Key3 => model.vertex_type = 3,
-                Key::Key4 => model.vertex_type = 4,
-                Key::Key5 => model.vertex_type = 5,
-                Key::Key6 => model.vertex_type = 6,
-                Key::Key7 => model.vertex_type = 7,
+                // Key::Key1 => model.vertex_type = 1,
+                // Key::Key2 => model.vertex_type = 2,
+                // Key::Key3 => model.vertex_type = 3,
+                // Key::Key4 => model.vertex_type = 4,
+                // Key::Key5 => model.vertex_type = 5,
+                // Key::Key6 => model.vertex_type = 6,
+                // Key::Key7 => model.vertex_type = 7,
+                Key::D => model.next_tile = penrose::Tile::DART,
+                Key::K => model.next_tile = penrose::Tile::KITE,
                 Key::Up => { model.scale = 2.*model.scale.min(100.) },
                 Key::Down => { model.scale = 0.5*model.scale.max(1.) },
-                Key::Left => { model.angle = (model.angle + 72) % 360 },
-                Key::Right => { model.angle = (model.angle + 360 - 72) % 360 },
+                Key::Left => { model.angle = (model.angle + 36) % 360 },
+                Key::Right => { model.angle = (model.angle + 360 - 36) % 360 },
                 _ => println!("KeyPressed = {:?}", key),
             }
         }
@@ -265,18 +285,23 @@ fn window_event(_app: &App, model: &mut Model, event: WindowEvent) {
         MousePressed(_button) => {
             let x = model.current_point.x as f64 / model.scale;
             let y = model.current_point.y as f64 / model.scale;
-            let res = match model.vertex_type {
-                1 => build_vertex1(x, y, model.angle),
-                2 => build_vertex2(x, y, model.angle),
-                3 => build_vertex3(x, y, model.angle),
-                4 => build_vertex4(x, y, model.angle),
-                5 => build_vertex5(x, y, model.angle),
-                6 => build_vertex6(x, y, model.angle),
-                7 => build_vertex7(x, y, model.angle),
-                _ => Err(666),
-            };
+            // let res = match model.vertex_type {
+            //     1 => build_vertex1(x, y, model.angle),
+            //     2 => build_vertex2(x, y, model.angle),
+            //     3 => build_vertex3(x, y, model.angle),
+            //     4 => build_vertex4(x, y, model.angle),
+            //     5 => build_vertex5(x, y, model.angle),
+            //     6 => build_vertex6(x, y, model.angle),
+            //     7 => build_vertex7(x, y, model.angle),
+            //     _ => Err(666),
+            // };
+            // match res {
+            //     Ok(t) => for o in t { model.tiles.push(o) },
+            //     Err(_) => println!("Error building vertex 2"),
+            // }
+            let res = build_tile(&model.next_tile, x, y, model.angle);
             match res {
-                Ok(t) => for o in t { model.tiles.push(o) },
+                Ok(t) => model.tiles.push(t),
                 Err(_) => println!("Error building vertex 2"),
             }
         }

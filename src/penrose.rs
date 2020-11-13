@@ -6,6 +6,11 @@ pub enum EdgeLength {
     LONG
 }
 
+pub enum Tile {
+    DART,
+    KITE
+}
+
 pub struct Dart {
     pub cx: f64,
     pub cy: f64,
