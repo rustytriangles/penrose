@@ -1,9 +1,16 @@
 use crate::geom::{Point2, pt2, Vector2, vec2, Polygon};
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 pub enum EdgeLength {
     SHORT,
     LONG
+}
+
+#[derive(Clone)]
+pub struct Edge {
+    pub center: (f64, f64),
+    pub angle: i32,
+    pub length: EdgeLength,
 }
 
 pub enum Tile {
@@ -118,6 +125,27 @@ impl Dart {
         boxed_arr[2*3+1] = self.cy + s*(-0.5) + c*( h);
 
         boxed_arr
+    }
+
+    pub fn get_edges(&self) -> Vec<Edge> {
+        let mut result = Vec::new();
+        for i in 1..5 {
+            let mut e = Edge { center: (0., 0.), angle: 0, length: EdgeLength::SHORT };
+            match self.edge_center(i) {
+                Ok(c) => e.center = c,
+                Err(_) => continue,
+            }
+            match self.edge_angle(i) {
+                Ok(a) => e.angle = a,
+                Err(_) => continue,
+            }
+            match self.edge_length(i) {
+                Ok(l) => e.length = l,
+                Err(_) => continue,
+            }
+            result.push(e);
+        }
+        result
     }
 }
 
@@ -273,6 +301,27 @@ impl Kite {
         boxed_arr[2*3+1] = self.cy + s*( 0.5) + c*( h);
 
         boxed_arr
+    }
+
+    pub fn get_edges(&self) -> Vec<Edge> {
+        let mut result = Vec::new();
+        for i in 1..5 {
+            let mut e = Edge { center: (0., 0.), angle: 0, length: EdgeLength::SHORT };
+            match self.edge_center(i) {
+                Ok(c) => e.center = c,
+                Err(_) => continue,
+            }
+            match self.edge_angle(i) {
+                Ok(a) => e.angle = a,
+                Err(_) => continue,
+            }
+            match self.edge_length(i) {
+                Ok(l) => e.length = l,
+                Err(_) => continue,
+            }
+            result.push(e);
+        }
+        result
     }
 }
 
