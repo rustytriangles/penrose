@@ -7,22 +7,29 @@ mod penrose;
 
 use penrose::*;
 
+struct DrawProps {
+    fill_color1: nannou::color::Srgb<u8>,
+    fill_color2: nannou::color::Srgb<u8>,
+    edge_color: nannou::color::Srgb<u8>,
+    edge_weight: f32,
+}
+
 trait Drawable {
-    fn draw(&self, draw: &nannou::draw::Draw, xoff: f32, yoff: f32, scale: f32);
+    fn draw(&self, draw: &nannou::draw::Draw, xoff: f32, yoff: f32, scale: f32, props: &DrawProps);
     fn append_to_vector(&self, dst: &mut Vec<Box<dyn Drawable>>, dx: f64, dy: f64);
     fn get_drawable_edges(&self) -> Vec<Edge>;
 }
 
 impl Drawable for Dart {
-    fn draw(&self, draw: &nannou::draw::Draw, xoff: f32, yoff: f32, scale: f32) {
+    fn draw(&self, draw: &nannou::draw::Draw, xoff: f32, yoff: f32, scale: f32, props: &DrawProps) {
         let pts = self.polygon(xoff, yoff, scale);
         let points = (0..4).map(|i| {
             pt2(pts[i].0, pts[i].1)
         });
         draw.polygon()
-            .color(WHITE)
-            .stroke(PINK)
-            .stroke_weight(2.)
+            .color(props.fill_color1)
+            .stroke(props.edge_color)
+            .stroke_weight(props.edge_weight)
             .join_miter()
             .points(points);
     }
@@ -41,15 +48,15 @@ impl Drawable for Dart {
 }
 
 impl Drawable for Kite {
-    fn draw(&self, draw: &nannou::draw::Draw, xoff: f32, yoff: f32, scale: f32) {
+    fn draw(&self, draw: &nannou::draw::Draw, xoff: f32, yoff: f32, scale: f32, props: &DrawProps) {
         let pts = self.polygon(xoff, yoff, scale);
         let points = (0..4).map(|i| {
             pt2(pts[i].0, pts[i].1)
         });
         draw.polygon()
-            .color(WHITE)
-            .stroke(PINK)
-            .stroke_weight(2.)
+            .color(props.fill_color2)
+            .stroke(props.edge_color)
+            .stroke_weight(props.edge_weight)
             .join_miter()
             .points(points);
     }
@@ -205,9 +212,14 @@ struct Model {
     edges: Vec<penrose::Edge>,
     current_point: Point2,
     scale: f64,
+    debug: bool,
     //    vertex_type: i32,
     next_tile: penrose::Tile,
     angle: i32,
+}
+
+fn snap_tolerance(scale: f64) -> f64 {
+    return 15. / scale
 }
 
 fn model(app: &App) -> Model {
@@ -239,15 +251,16 @@ fn model(app: &App) -> Model {
             edges: Vec::new(),
             current_point: pt2(0.,0.),
             scale: 25.,
+            debug: false,
             //            vertex_type: 1,
             next_tile: penrose::Tile::DART,
             angle: 0,
     }
 }
 
-fn snap_to_edges(tile: &Box<dyn Drawable>, edges: &Vec<Edge>) -> (f64, f64) {
+fn snap_to_edges(tile: &Box<dyn Drawable>, edges: &Vec<Edge>, tol: f64) -> (f64, f64) {
     let mut result = (0., 0.);
-    let mut curr_l2 = 2.;
+    let mut curr_l2 = tol;
 
     let e1 = tile.get_drawable_edges();
     for e in edges {
@@ -271,6 +284,27 @@ fn snap_to_edges(tile: &Box<dyn Drawable>, edges: &Vec<Edge>) -> (f64, f64) {
         }
     }
     return result
+}
+
+fn snaps(edges: &Vec<penrose::Edge>, tile: &Box<dyn Drawable>, tol: f64) -> bool {
+
+    let de = tile.get_drawable_edges();
+
+    for edge in edges {
+        for i in 0..4 {
+            if (edge.angle + 180)%360 != de[i].angle {
+                continue;
+            }
+
+            let dx = edge.center.0 - de[i].center.0;
+            let dy = edge.center.1 - de[i].center.1;
+            let l2 = dx*dx + dy*dy;
+            if (l2 < tol) {
+                return true
+            }
+        }
+    }
+    return false
 }
 
 fn match_edges(t1: &Box<dyn Drawable>, t2: &Box<dyn Drawable>, skip: [bool; 4]) -> [bool; 4] {
@@ -302,8 +336,35 @@ fn match_edges(t1: &Box<dyn Drawable>, t2: &Box<dyn Drawable>, skip: [bool; 4]) 
 
 fn add_tile(model: &mut Model, tile: Box<dyn Drawable>) {
 
-    let offset = snap_to_edges(&tile, &model.edges.clone());
+    let offset = snap_to_edges(&tile, &model.edges.clone(), snap_tolerance(model.scale));
     tile.append_to_vector(&mut model.tiles, offset.0, offset.1);
+
+    let mut new_edges = Vec::new();
+    for t1 in &model.tiles {
+        let mut matches = [false, false, false, false];
+        for t2 in &model.tiles {
+            // @todo don't need to check tile against itself
+            // if (t1 == t2) {
+            //     continue;
+            // }
+            matches = match_edges(&t1, &t2, matches);
+        }
+
+        let e = t1.get_drawable_edges();
+        for i in 0..4 {
+            if (!matches[i]) {
+                new_edges.push(Edge {center: (e[i].center.0, e[i].center.1),
+                                     angle: e[i].angle,
+                                     length: e[i].length } );
+            }
+        }
+    }
+    model.edges = new_edges;
+}
+
+fn pop_last_tile(model: &mut Model) {
+
+    model.tiles.pop();
 
     let mut new_edges = Vec::new();
     for t1 in &model.tiles {
@@ -352,24 +413,47 @@ fn view(app: &App, model: &Model, frame: Frame) {
     // Clear the background to blue.
     draw.background().color(CORNFLOWERBLUE);
 
+    let tile_props = DrawProps {
+        fill_color1: LEMONCHIFFON,
+        fill_color2: LINEN,
+        edge_color: PINK,
+        edge_weight: 2.
+    };
+
+    let drag_props = DrawProps {
+        fill_color1: GAINSBORO,
+        fill_color2: GAINSBORO,
+        edge_color: PINK,
+        edge_weight: 2.
+    };
+
+    let snap_props = DrawProps {
+        fill_color1: LIGHTGREEN,
+        fill_color2: LIGHTGREEN,
+        edge_color: PINK,
+        edge_weight: 2.
+    };
+
     // Draw the tiles
     for t in &model.tiles {
-        t.draw(&draw, 0., 0., model.scale as f32);
+        t.draw(&draw, 0., 0., model.scale as f32, &tile_props);
     }
 
     // DEBUGGING: Draw the edges
-    for e in &model.edges {
-        let angle_in_radians = e.angle as f64 * std::f64::consts::PI / 180.0f64;
-        let r = (model.scale as f64) * (if e.length == EdgeLength::SHORT { 1.0f64 } else { 1.6f64 });
-        let v = Vector2::<f32>::new((r*angle_in_radians.cos()) as f32,
-                                    (r*angle_in_radians.sin()) as f32);
-        let cpt = pt2((e.center.0 * model.scale + 0.) as f32,
-                      (e.center.1 * model.scale + 0.) as f32);
-        let p1 = cpt - v;
-        let p2 = cpt + v;
-        draw.line().points(p1, p2)
-            .color(BROWN)
-            .weight(2.);
+    if (model.debug) {
+        for e in &model.edges {
+            let angle_in_radians = e.angle as f64 * std::f64::consts::PI / 180.0f64;
+            let r = (model.scale as f64) * (if e.length == EdgeLength::SHORT { 1.0f64 } else { 1.6f64 });
+            let v = Vector2::<f32>::new((r*angle_in_radians.cos()) as f32,
+                                        (r*angle_in_radians.sin()) as f32);
+            let cpt = pt2((e.center.0 * model.scale + 0.) as f32,
+                          (e.center.1 * model.scale + 0.) as f32);
+            let p1 = cpt - v;
+            let p2 = cpt + v;
+            draw.line().points(p1, p2)
+                .color(BROWN)
+                .weight(2.);
+        }
     }
 
     // Draw currently dragged tile
@@ -377,7 +461,10 @@ fn view(app: &App, model: &Model, frame: Frame) {
     let y = model.current_point.y as f64 / model.scale;
     let tmp = build_tile(&model.next_tile, x, y, model.angle);
     match tmp {
-        Ok(t) => t.draw(&draw, 0., 0., model.scale as f32),
+        Ok(t) => {
+            let props = if snaps(&model.edges, &t, snap_tolerance(model.scale)) { &snap_props } else { &drag_props };
+            t.draw(&draw, 0., 0., model.scale as f32, props)
+        },
         Err(_) => println!("Error drawing current tile"),
     }
 
@@ -401,6 +488,8 @@ fn window_event(_app: &App, model: &mut Model, event: WindowEvent) {
                 Key::C => { model.tiles = Vec::new(); model.edges = Vec::new(); },
                 Key::D => model.next_tile = penrose::Tile::DART,
                 Key::K => model.next_tile = penrose::Tile::KITE,
+                Key::X => model.debug = !model.debug,
+                Key::U => pop_last_tile(model),
                 Key::Up => { model.scale = 2.*model.scale.min(100.) },
                 Key::Down => { model.scale = 0.5*model.scale.max(1.) },
                 Key::Left => { model.angle = (model.angle + 36) % 360 },
