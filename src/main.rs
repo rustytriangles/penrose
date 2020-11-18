@@ -11,6 +11,8 @@ struct DrawProps {
     fill_color1: nannou::color::Srgb<u8>,
     fill_color2: nannou::color::Srgb<u8>,
     edge_color: nannou::color::Srgb<u8>,
+    arc1_color: nannou::color::Srgb<u8>,
+    arc2_color: nannou::color::Srgb<u8>,
     edge_weight: f32,
     show_arcs: bool,
 }
@@ -43,7 +45,7 @@ impl Drawable for Dart {
                     yoff + scale*(a1.center.1 + radius * a.sin()) as f32)
             });
             draw.polyline()
-                .color(RED)
+                .color(props.arc1_color)
                 .stroke_weight(2.)
                 .points(arc_points);
 
@@ -56,7 +58,7 @@ impl Drawable for Dart {
                     yoff + scale*(a2.center.1 + radius * a.sin()) as f32)
             });
             draw.polyline()
-                .color(GREEN)
+                .color(props.arc2_color)
                 .stroke_weight(2.)
                 .points(arc_points);
         }
@@ -100,7 +102,7 @@ impl Drawable for Kite {
                     yoff + scale*(a1.center.1 + radius * a.sin()) as f32)
             });
             draw.polyline()
-                .color(RED)
+                .color(props.arc1_color)
                 .stroke_weight(2.)
                 .points(arc_points);
 
@@ -113,7 +115,7 @@ impl Drawable for Kite {
                     yoff + scale*(a2.center.1 + radius * a.sin()) as f32)
             });
             draw.polyline()
-                .color(GREEN)
+                .color(props.arc2_color)
                 .stroke_weight(2.)
                 .points(arc_points);
         }
@@ -150,8 +152,8 @@ fn interp_angles(start_angle: i32, end_angle: i32) -> Vec<f64> {
            (end_angle as f64) * std::f64::consts::PI / 180. )
     };
 
-    for i in 0..100 {
-        result.push(angles.0 + (i as f64) / 99. * (angles.1 - angles.0));
+    for i in 0..25 {
+        result.push(angles.0 + (i as f64) / 24. * (angles.1 - angles.0));
     }
     return result
 }
@@ -493,7 +495,9 @@ fn view(app: &App, model: &Model, frame: Frame) {
     let tile_props = DrawProps {
         fill_color1: LEMONCHIFFON,
         fill_color2: LINEN,
-        edge_color: PINK,
+        edge_color: LAVENDER,
+        arc1_color: LIGHTPINK,
+        arc2_color: PALEGREEN,
         edge_weight: if model.show_edges { 2. } else { 0. },
         show_arcs: model.show_arcs,
     };
@@ -502,6 +506,8 @@ fn view(app: &App, model: &Model, frame: Frame) {
         fill_color1: GAINSBORO,
         fill_color2: GAINSBORO,
         edge_color: PINK,
+        arc1_color: LIGHTPINK,
+        arc2_color: PALEGREEN,
         edge_weight: 0.,
         show_arcs: model.show_arcs,
     };
@@ -510,6 +516,8 @@ fn view(app: &App, model: &Model, frame: Frame) {
         fill_color1: LIGHTGREEN,
         fill_color2: LIGHTGREEN,
         edge_color: PINK,
+        arc1_color: LIGHTPINK,
+        arc2_color: PALEGREEN,
         edge_weight: 0.,
         show_arcs: model.show_arcs,
     };
