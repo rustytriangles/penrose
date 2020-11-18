@@ -13,6 +13,13 @@ pub struct Edge {
     pub length: EdgeLength,
 }
 
+#[derive(Clone)]
+pub struct Arc {
+    pub center: (f64, f64),
+    pub start_angle: i32,
+    pub end_angle: i32,
+}
+
 pub enum Tile {
     DART,
     KITE
@@ -53,6 +60,7 @@ impl Dart {
 
     pub fn polygon(&self, xoff: f32, yoff: f32, scale: f32) -> Vec<(f32,f32)> {
         let pts = self.geometry();
+
         let xoff64 = xoff as f64;
         let yoff64 = yoff as f64;
         let scale64 = scale as f64;
@@ -146,6 +154,33 @@ impl Dart {
             result.push(e);
         }
         result
+    }
+
+    pub fn get_big_arc(&self) -> Arc {
+        let pts = self.geometry();
+//        println!("get_big_arc {}, {}, {}, {}, {}, {}, {}, {}",
+//                 pts[0], pts[1], pts[2], pts[3],
+        //                 pts[4], pts[5], pts[6], pts[7]);
+        let ci = 2;
+        let cx = pts[2*ci+0];
+        let cy = pts[2*ci+1];
+        return Arc {
+            center: (cx, cy),
+            start_angle: (self.angle + 144)%360,
+            end_angle: (self.angle + 216)%360,
+        }
+    }
+
+    pub fn get_small_arc(&self) -> Arc {
+        let pts = self.geometry();
+        let ci = 0;
+        let cx = pts[2*ci+0];
+        let cy = pts[2*ci+1];
+        return Arc {
+            center: (cx, cy),
+            start_angle: (self.angle + 252)%360,
+            end_angle: (self.angle + 468)%360,
+        }
     }
 }
 
@@ -322,6 +357,30 @@ impl Kite {
             result.push(e);
         }
         result
+    }
+
+    pub fn get_big_arc(&self) -> Arc {
+        let pts = self.geometry();
+        let ci = 0;
+        let cx = pts[2*ci+0];
+        let cy = pts[2*ci+1];
+        return Arc {
+            center: (cx, cy),
+            start_angle: (self.angle + 324)%360,
+            end_angle: (self.angle + 396)%360,
+        }
+    }
+
+    pub fn get_small_arc(&self) -> Arc {
+        let pts = self.geometry();
+        let ci = 2;
+        let cx = pts[2*ci+0];
+        let cy = pts[2*ci+1];
+        return Arc {
+            center: (cx, cy),
+            start_angle: (self.angle + 108)%360,
+            end_angle: (self.angle + 252)%360,
+        }
     }
 }
 

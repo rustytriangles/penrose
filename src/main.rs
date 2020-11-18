@@ -12,6 +12,7 @@ struct DrawProps {
     fill_color2: nannou::color::Srgb<u8>,
     edge_color: nannou::color::Srgb<u8>,
     edge_weight: f32,
+    show_arcs: bool,
 }
 
 trait Drawable {
@@ -32,6 +33,33 @@ impl Drawable for Dart {
             .stroke_weight(props.edge_weight)
             .join_miter()
             .points(points);
+
+        if (props.show_arcs) {
+            let a1 = self.get_small_arc();
+            let angles = interp_angles(a1.start_angle, a1.end_angle);
+            let radius = 0.6;
+            let arc_points = angles.iter().map(|a| {
+                pt2(xoff + scale*(a1.center.0 + radius * a.cos()) as f32,
+                    yoff + scale*(a1.center.1 + radius * a.sin()) as f32)
+            });
+            draw.polyline()
+                .color(RED)
+                .stroke_weight(2.)
+                .points(arc_points);
+
+            //
+            let a2 = self.get_big_arc();
+            let angles = interp_angles(a2.start_angle, a2.end_angle);
+            let radius = 0.75;
+            let arc_points = angles.iter().map(|a| {
+                pt2(xoff + scale*(a2.center.0 + radius * a.cos()) as f32,
+                    yoff + scale*(a2.center.1 + radius * a.sin()) as f32)
+            });
+            draw.polyline()
+                .color(GREEN)
+                .stroke_weight(2.)
+                .points(arc_points);
+        }
     }
 
     fn append_to_vector(&self, dst: &mut Vec<Box<dyn Drawable>>, dx: f64, dy: f64) {
@@ -59,6 +87,36 @@ impl Drawable for Kite {
             .stroke_weight(props.edge_weight)
             .join_miter()
             .points(points);
+
+
+        if (props.show_arcs) {
+            let s5 = 5_f64.sqrt();
+            let phi = (1.+s5)/2.;
+            let a1 = self.get_small_arc();
+            let angles = interp_angles(a1.start_angle, a1.end_angle);
+            let radius = phi - 0.6;
+            let arc_points = angles.iter().map(|a| {
+                pt2(xoff + scale*(a1.center.0 + radius * a.cos()) as f32,
+                    yoff + scale*(a1.center.1 + radius * a.sin()) as f32)
+            });
+            draw.polyline()
+                .color(RED)
+                .stroke_weight(2.)
+                .points(arc_points);
+
+            //
+            let a2 = self.get_big_arc();
+            let angles = interp_angles(a2.start_angle, a2.end_angle);
+            let radius = 1. + phi - 0.75;
+            let arc_points = angles.iter().map(|a| {
+                pt2(xoff + scale*(a2.center.0 + radius * a.cos()) as f32,
+                    yoff + scale*(a2.center.1 + radius * a.sin()) as f32)
+            });
+            draw.polyline()
+                .color(GREEN)
+                .stroke_weight(2.)
+                .points(arc_points);
+        }
     }
 
     fn append_to_vector(&self, dst: &mut Vec<Box<dyn Drawable>>, dx: f64, dy: f64) {
@@ -79,6 +137,23 @@ fn build_tile(tile: &penrose::Tile, x: f64, y: f64, angle: i32) -> Result<Box<dy
         penrose::Tile::DART => Ok(Box::new(Dart::new(x, y, angle))),
         penrose::Tile::KITE => Ok(Box::new(Kite::new(x, y, angle))),
     }
+}
+
+fn interp_angles(start_angle: i32, end_angle: i32) -> Vec<f64> {
+    let mut result = Vec::new();
+
+    let angles = if start_angle > end_angle {
+        ( (start_angle as f64) * std::f64::consts::PI / 180.,
+           ((end_angle + 360) as f64) * std::f64::consts::PI / 180. )
+    } else {
+        ( (start_angle as f64) * std::f64::consts::PI / 180.,
+           (end_angle as f64) * std::f64::consts::PI / 180. )
+    };
+
+    for i in 0..100 {
+        result.push(angles.0 + (i as f64) / 99. * (angles.1 - angles.0));
+    }
+    return result
 }
 
 // fn build_vertex1(x: f64, y: f64, angle: i32) -> Result<Vec<Box<dyn Drawable>>, i32> {
@@ -211,9 +286,10 @@ struct Model {
     tiles: Vec<Box<dyn Drawable>>,
     edges: Vec<penrose::Edge>,
     current_point: Point2,
+    show_edges: bool,
+    show_arcs: bool,
     scale: f64,
     debug: bool,
-    //    vertex_type: i32,
     next_tile: penrose::Tile,
     angle: i32,
 }
@@ -250,9 +326,10 @@ fn model(app: &App) -> Model {
     Model { tiles: Vec::new(),
             edges: Vec::new(),
             current_point: pt2(0.,0.),
+            show_edges: true,
+            show_arcs: true,
             scale: 25.,
             debug: false,
-            //            vertex_type: 1,
             next_tile: penrose::Tile::DART,
             angle: 0,
     }
@@ -417,21 +494,24 @@ fn view(app: &App, model: &Model, frame: Frame) {
         fill_color1: LEMONCHIFFON,
         fill_color2: LINEN,
         edge_color: PINK,
-        edge_weight: 2.
+        edge_weight: if model.show_edges { 2. } else { 0. },
+        show_arcs: model.show_arcs,
     };
 
     let drag_props = DrawProps {
         fill_color1: GAINSBORO,
         fill_color2: GAINSBORO,
         edge_color: PINK,
-        edge_weight: 2.
+        edge_weight: 0.,
+        show_arcs: model.show_arcs,
     };
 
     let snap_props = DrawProps {
         fill_color1: LIGHTGREEN,
         fill_color2: LIGHTGREEN,
         edge_color: PINK,
-        edge_weight: 2.
+        edge_weight: 0.,
+        show_arcs: model.show_arcs,
     };
 
     // Draw the tiles
@@ -485,8 +565,10 @@ fn window_event(_app: &App, model: &mut Model, event: WindowEvent) {
                 // Key::Key5 => model.vertex_type = 5,
                 // Key::Key6 => model.vertex_type = 6,
                 // Key::Key7 => model.vertex_type = 7,
+                Key::A => model.show_arcs = !model.show_arcs,
                 Key::C => { model.tiles = Vec::new(); model.edges = Vec::new(); },
                 Key::D => model.next_tile = penrose::Tile::DART,
+                Key::E => model.show_edges = !model.show_edges,
                 Key::K => model.next_tile = penrose::Tile::KITE,
                 Key::X => model.debug = !model.debug,
                 Key::U => pop_last_tile(model),
