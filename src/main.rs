@@ -49,7 +49,7 @@ impl Drawable for Dart {
         if (props.show_arcs) {
             let a1 = self.get_small_arc();
             let angles = interp_angles(a1.start_angle, a1.end_angle);
-            let radius = 0.6;
+            let radius = a1.radius;
             let arc_points = angles.iter().map(|a| {
                 pt2(xoff + scale*(a1.center.0 + radius * a.cos()) as f32,
                     yoff + scale*(a1.center.1 + radius * a.sin()) as f32)
@@ -62,7 +62,7 @@ impl Drawable for Dart {
             //
             let a2 = self.get_big_arc();
             let angles = interp_angles(a2.start_angle, a2.end_angle);
-            let radius = 0.75;
+            let radius = a2.radius;
             let arc_points = angles.iter().map(|a| {
                 pt2(xoff + scale*(a2.center.0 + radius * a.cos()) as f32,
                     yoff + scale*(a2.center.1 + radius * a.sin()) as f32)
@@ -138,7 +138,7 @@ impl Drawable for Kite {
             let phi = (1.+s5)/2.;
             let a1 = self.get_small_arc();
             let angles = interp_angles(a1.start_angle, a1.end_angle);
-            let radius = phi - 0.6;
+            let radius = a1.radius;
             let arc_points = angles.iter().map(|a| {
                 pt2(xoff + scale*(a1.center.0 + radius * a.cos()) as f32,
                     yoff + scale*(a1.center.1 + radius * a.sin()) as f32)
@@ -151,7 +151,7 @@ impl Drawable for Kite {
             //
             let a2 = self.get_big_arc();
             let angles = interp_angles(a2.start_angle, a2.end_angle);
-            let radius = 1. + phi - 0.75;
+            let radius = a2.radius;
             let arc_points = angles.iter().map(|a| {
                 pt2(xoff + scale*(a2.center.0 + radius * a.cos()) as f32,
                     yoff + scale*(a2.center.1 + radius * a.sin()) as f32)
@@ -205,10 +205,142 @@ impl Drawable for Kite {
     }
 }
 
+impl Drawable for Skinny {
+    fn draw(&self, draw: &nannou::draw::Draw, xoff: f32, yoff: f32, scale: f32, props: &DrawProps) {
+        let pts = self.polygon(xoff, yoff, scale);
+        let points = (0..4).map(|i| {
+            pt2(pts[i].0, pts[i].1)
+        });
+        draw.polygon()
+            .color(props.fill_color1)
+            .stroke(props.edge_color)
+            .stroke_weight(props.edge_weight)
+            .join_miter()
+            .points(points);
+
+
+        if (props.show_arcs) {
+            let a1 = self.get_small_arc();
+            let angles = interp_angles(a1.start_angle, a1.end_angle);
+            let radius = a1.radius;
+            let arc_points = angles.iter().map(|a| {
+                pt2(xoff + scale*(a1.center.0 + radius * a.cos()) as f32,
+                    yoff + scale*(a1.center.1 + radius * a.sin()) as f32)
+            });
+            draw.polyline()
+                .color(props.arc1_color)
+                .stroke_weight(2.)
+                .points(arc_points);
+
+            //
+            let a2 = self.get_big_arc();
+            let angles = interp_angles(a2.start_angle, a2.end_angle);
+            let radius = a2.radius;
+            let arc_points = angles.iter().map(|a| {
+                pt2(xoff + scale*(a2.center.0 + radius * a.cos()) as f32,
+                    yoff + scale*(a2.center.1 + radius * a.sin()) as f32)
+            });
+            draw.polyline()
+                .color(props.arc2_color)
+                .stroke_weight(2.)
+                .points(arc_points);
+        }
+
+        if (props.show_bars) {
+        }
+    }
+
+    fn append_to_vector(&self, dst: &mut Vec<Box<dyn Drawable>>, dx: f64, dy: f64) {
+        dst.push(Box::new(penrose::Skinny {
+            cx: self.cx + dx,
+            cy: self.cy + dy,
+            angle: self.angle
+        }));
+    }
+
+    fn get_drawable_edges(&self) -> Vec<Edge> {
+        self.get_edges()
+    }
+
+    fn get_ammann_bars(&self, xoff: f32, yoff: f32, scale: f32) -> Vec<(f32,f32)> {
+
+        let mut result = Vec::new();
+
+        return result
+    }
+}
+
+impl Drawable for Fat {
+    fn draw(&self, draw: &nannou::draw::Draw, xoff: f32, yoff: f32, scale: f32, props: &DrawProps) {
+        let pts = self.polygon(xoff, yoff, scale);
+        let points = (0..4).map(|i| {
+            pt2(pts[i].0, pts[i].1)
+        });
+        draw.polygon()
+            .color(props.fill_color2)
+            .stroke(props.edge_color)
+            .stroke_weight(props.edge_weight)
+            .join_miter()
+            .points(points);
+
+
+        if (props.show_arcs) {
+            let a1 = self.get_small_arc();
+            let angles = interp_angles(a1.start_angle, a1.end_angle);
+            let radius = a1.radius;
+            let arc_points = angles.iter().map(|a| {
+                pt2(xoff + scale*(a1.center.0 + radius * a.cos()) as f32,
+                    yoff + scale*(a1.center.1 + radius * a.sin()) as f32)
+            });
+            draw.polyline()
+                .color(props.arc1_color)
+                .stroke_weight(2.)
+                .points(arc_points);
+
+            //
+            let a2 = self.get_big_arc();
+            let angles = interp_angles(a2.start_angle, a2.end_angle);
+            let radius = a2.radius;
+            let arc_points = angles.iter().map(|a| {
+                pt2(xoff + scale*(a2.center.0 + radius * a.cos()) as f32,
+                    yoff + scale*(a2.center.1 + radius * a.sin()) as f32)
+            });
+            draw.polyline()
+                .color(props.arc2_color)
+                .stroke_weight(2.)
+                .points(arc_points);
+        }
+
+        if (props.show_bars) {
+        }
+    }
+
+    fn append_to_vector(&self, dst: &mut Vec<Box<dyn Drawable>>, dx: f64, dy: f64) {
+        dst.push(Box::new(penrose::Fat {
+            cx: self.cx + dx,
+            cy: self.cy + dy,
+            angle: self.angle
+        }));
+    }
+
+    fn get_drawable_edges(&self) -> Vec<Edge> {
+        self.get_edges()
+    }
+
+    fn get_ammann_bars(&self, xoff: f32, yoff: f32, scale: f32) -> Vec<(f32,f32)> {
+
+        let mut result = Vec::new();
+
+        return result
+    }
+}
+
 fn build_tile(tile: &penrose::Tile, x: f64, y: f64, angle: i32) -> Result<Box<dyn Drawable>, i32> {
     match tile {
         penrose::Tile::DART => Ok(Box::new(Dart::new(x, y, angle))),
         penrose::Tile::KITE => Ok(Box::new(Kite::new(x, y, angle))),
+        penrose::Tile::FAT => Ok(Box::new(Fat::new(x, y, angle))),
+        penrose::Tile::SKINNY => Ok(Box::new(Skinny::new(x, y, angle))),
     }
 }
 
@@ -655,9 +787,11 @@ fn window_event(_app: &App, model: &mut Model, event: WindowEvent) {
                 Key::A => model.show_arcs = !model.show_arcs,
                 Key::B => model.show_bars = !model.show_bars,
                 Key::C => { model.tiles = Vec::new(); model.edges = Vec::new(); },
-                Key::D => model.next_tile = penrose::Tile::DART,
                 Key::E => model.show_edges = !model.show_edges,
+                Key::D => model.next_tile = penrose::Tile::DART,
                 Key::K => model.next_tile = penrose::Tile::KITE,
+                Key::S => model.next_tile = penrose::Tile::SKINNY,
+                Key::F => model.next_tile = penrose::Tile::FAT,
                 Key::X => model.debug = !model.debug,
                 Key::U => pop_last_tile(model),
                 Key::Up => { model.scale = 2.*model.scale.min(100.) },

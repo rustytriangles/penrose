@@ -16,13 +16,16 @@ pub struct Edge {
 #[derive(Clone)]
 pub struct Arc {
     pub center: (f64, f64),
+    pub radius: f64,
     pub start_angle: i32,
     pub end_angle: i32,
 }
 
 pub enum Tile {
     DART,
-    KITE
+    KITE,
+    FAT,
+    SKINNY
 }
 
 pub struct Dart {
@@ -166,6 +169,7 @@ impl Dart {
         let cy = pts[2*ci+1];
         return Arc {
             center: (cx, cy),
+            radius: 0.75,
             start_angle: (self.angle + 144)%360,
             end_angle: (self.angle + 216)%360,
         }
@@ -178,6 +182,7 @@ impl Dart {
         let cy = pts[2*ci+1];
         return Arc {
             center: (cx, cy),
+            radius: 0.6,
             start_angle: (self.angle + 252)%360,
             end_angle: (self.angle + 468)%360,
         }
@@ -360,24 +365,30 @@ impl Kite {
     }
 
     pub fn get_big_arc(&self) -> Arc {
+        let s5 = 5_f64.sqrt();
+        let phi = (1.+s5)/2.;
         let pts = self.geometry();
         let ci = 0;
         let cx = pts[2*ci+0];
         let cy = pts[2*ci+1];
         return Arc {
             center: (cx, cy),
+            radius: 1.0 + phi - 0.75,
             start_angle: (self.angle + 324)%360,
             end_angle: (self.angle + 396)%360,
         }
     }
 
     pub fn get_small_arc(&self) -> Arc {
+        let s5 = 5_f64.sqrt();
+        let phi = (1.+s5)/2.;
         let pts = self.geometry();
         let ci = 2;
         let cx = pts[2*ci+0];
         let cy = pts[2*ci+1];
         return Arc {
             center: (cx, cy),
+            radius: phi - 0.6,
             start_angle: (self.angle + 108)%360,
             end_angle: (self.angle + 252)%360,
         }
@@ -439,6 +450,310 @@ pub fn place_kite_edge(e: i32, pt: (f64,f64), edge_angle: i32) -> Kite {
         }
     }
 }
+
+pub struct Fat {
+    pub cx: f64,
+    pub cy: f64,
+    pub angle: i32,
+}
+
+impl Fat {
+    pub fn new(x: f64, y: f64, a: i32) -> Self {
+        Self {
+            cx: x,
+            cy: y,
+            angle: (a+360)%360
+        }
+    }
+
+
+    pub fn rotate(&self, angle: i32) -> Fat {
+        Fat{ cx: self.cx, cy: self.cy, angle: (self.angle + angle)%360 }
+    }
+
+    pub fn translate(&self, ox: f64, oy: f64) -> Fat {
+        Fat{ cx: (self.cx + ox), cy: (self.cy + oy), angle: self.angle }
+    }
+
+    pub fn polygon(&self, xoff: f32, yoff: f32, scale: f32) -> Vec<(f32,f32)> {
+        let pts = self.geometry();
+
+        let xoff64 = xoff as f64;
+        let yoff64 = yoff as f64;
+        let scale64 = scale as f64;
+
+        vec![( (pts[2*0+0]*scale64 + xoff64) as f32, (pts[2*0+1]*scale64 + yoff64) as f32 ),
+             ( (pts[2*1+0]*scale64 + xoff64) as f32, (pts[2*1+1]*scale64 + yoff64) as f32 ),
+             ( (pts[2*2+0]*scale64 + xoff64) as f32, (pts[2*2+1]*scale64 + yoff64) as f32 ),
+             ( (pts[2*3+0]*scale64 + xoff64) as f32, (pts[2*3+1]*scale64 + yoff64) as f32 )]
+    }
+
+    pub fn edge_angle(&self, e: i32) -> Result<i32, i32> {
+        match e {
+            1 => Ok((324 + self.angle)%360),
+            2 => Ok(( 36 + self.angle)%360),
+            3 => Ok((144 + self.angle)%360),
+            4 => Ok((216 + self.angle)%360),
+            _ => Err(e),
+        }
+    }
+
+    pub fn edge_length(&self, e: i32) -> Result<EdgeLength, i32> {
+        match e {
+            1 => Ok(EdgeLength::SHORT),
+            2 => Ok(EdgeLength::SHORT),
+            3 => Ok(EdgeLength::SHORT),
+            4 => Ok(EdgeLength::SHORT),
+            _ => Err(e),
+        }
+    }
+
+    pub fn edge_center(&self, e: i32) -> Result<(f64, f64), i32> {
+        let (i1, i2) = edge_index_to_vertex_tuple(e)?;
+        let pts = self.geometry();
+        let x1 = pts[2*i1+0];
+        let y1 = pts[2*i1+1];
+        let x2 = pts[2*i2+0];
+        let y2 = pts[2*i2+1];
+        Ok(( (x1+x2)/2., (y1+y2)/2. ))
+    }
+
+    pub fn edge_points(&self, e: i32) -> Result<((f64, f64), (f64, f64)), i32> {
+        let (i1, i2) = edge_index_to_vertex_tuple(e)?;
+        let pts = self.geometry();
+        let x1 = pts[2*i1+0];
+        let y1 = pts[2*i1+1];
+        let x2 = pts[2*i2+0];
+        let y2 = pts[2*i2+1];
+        Ok(( (x1,y1), (x2,y2) ))
+    }
+
+    fn geometry(&self) ->  Box<[f64]> {
+        let angle_in_radians = self.angle as f64 * std::f64::consts::PI / 180.;
+        let c = angle_in_radians.cos();
+        let s = angle_in_radians.sin();
+        let s5 = 5_f64.sqrt();
+        let x = (3. + s5) / 4.;
+        let y = (10. + 2. * s5).sqrt() / 4.;
+
+        let mut boxed_arr = Box::new([0.; 8]);
+        boxed_arr[2*0+0] = self.cx + c*(-x ) - s*( 0.);
+        boxed_arr[2*0+1] = self.cy + s*(-x ) + c*( 0.);
+
+        boxed_arr[2*1+0] = self.cx + c*( 0.) - s*(-y );
+        boxed_arr[2*1+1] = self.cy + s*( 0.) + c*(-y );
+
+        boxed_arr[2*2+0] = self.cx + c*( x ) - s*( 0.);
+        boxed_arr[2*2+1] = self.cy + s*( x ) + c*( 0.);
+
+        boxed_arr[2*3+0] = self.cx + c*( 0.) - s*( y );
+        boxed_arr[2*3+1] = self.cy + s*( 0.) + c*( y );
+
+        boxed_arr
+    }
+
+    pub fn get_edges(&self) -> Vec<Edge> {
+        let mut result = Vec::new();
+        for i in 1..5 {
+            let mut e = Edge { center: (0., 0.), angle: 0, length: EdgeLength::SHORT };
+            match self.edge_center(i) {
+                Ok(c) => e.center = c,
+                Err(_) => continue,
+            }
+            match self.edge_angle(i) {
+                Ok(a) => e.angle = a,
+                Err(_) => continue,
+            }
+            match self.edge_length(i) {
+                Ok(l) => e.length = l,
+                Err(_) => continue,
+            }
+            result.push(e);
+        }
+        result
+    }
+
+    pub fn get_big_arc(&self) -> Arc {
+        let pts = self.geometry();
+        let ci = 0;
+        let cx = pts[2*ci+0];
+        let cy = pts[2*ci+1];
+        return Arc {
+            center: (cx, cy),
+            radius: 1.25,
+            start_angle: (self.angle + 324)%360,
+            end_angle: (self.angle + 36)%360,
+        }
+    }
+
+    pub fn get_small_arc(&self) -> Arc {
+        let pts = self.geometry();
+        let ci = 2;
+        let cx = pts[2*ci+0];
+        let cy = pts[2*ci+1];
+        return Arc {
+            center: (cx, cy),
+            radius: 0.375,
+            start_angle: (self.angle + 144)%360,
+            end_angle: (self.angle + 216)%360,
+        }
+    }
+}
+
+pub struct Skinny {
+    pub cx: f64,
+    pub cy: f64,
+    pub angle: i32,
+}
+
+impl Skinny {
+    pub fn new(x: f64, y: f64, a: i32) -> Self {
+        Self {
+            cx: x,
+            cy: y,
+            angle: (a+360)%360
+        }
+    }
+
+
+    pub fn rotate(&self, angle: i32) -> Skinny {
+        Skinny{ cx: self.cx, cy: self.cy, angle: (self.angle + angle)%360 }
+    }
+
+    pub fn translate(&self, ox: f64, oy: f64) -> Skinny {
+        Skinny{ cx: (self.cx + ox), cy: (self.cy + oy), angle: self.angle }
+    }
+
+    pub fn polygon(&self, xoff: f32, yoff: f32, scale: f32) -> Vec<(f32,f32)> {
+        let pts = self.geometry();
+
+        let xoff64 = xoff as f64;
+        let yoff64 = yoff as f64;
+        let scale64 = scale as f64;
+
+        vec![( (pts[2*0+0]*scale64 + xoff64) as f32, (pts[2*0+1]*scale64 + yoff64) as f32 ),
+             ( (pts[2*1+0]*scale64 + xoff64) as f32, (pts[2*1+1]*scale64 + yoff64) as f32 ),
+             ( (pts[2*2+0]*scale64 + xoff64) as f32, (pts[2*2+1]*scale64 + yoff64) as f32 ),
+             ( (pts[2*3+0]*scale64 + xoff64) as f32, (pts[2*3+1]*scale64 + yoff64) as f32 )]
+    }
+
+    pub fn edge_angle(&self, e: i32) -> Result<i32, i32> {
+        match e {
+            1 => Ok((360 + self.angle)%360),
+            2 => Ok(( 36 + self.angle)%360),
+            3 => Ok((180 + self.angle)%360),
+            4 => Ok((216 + self.angle)%360),
+            _ => Err(e),
+        }
+    }
+
+    pub fn edge_length(&self, e: i32) -> Result<EdgeLength, i32> {
+        match e {
+            1 => Ok(EdgeLength::SHORT),
+            2 => Ok(EdgeLength::SHORT),
+            3 => Ok(EdgeLength::SHORT),
+            4 => Ok(EdgeLength::SHORT),
+            _ => Err(e),
+        }
+    }
+
+    pub fn edge_center(&self, e: i32) -> Result<(f64, f64), i32> {
+        let (i1, i2) = edge_index_to_vertex_tuple(e)?;
+        let pts = self.geometry();
+        let x1 = pts[2*i1+0];
+        let y1 = pts[2*i1+1];
+        let x2 = pts[2*i2+0];
+        let y2 = pts[2*i2+1];
+        Ok(( (x1+x2)/2., (y1+y2)/2. ))
+    }
+
+    pub fn edge_points(&self, e: i32) -> Result<((f64, f64), (f64, f64)), i32> {
+        let (i1, i2) = edge_index_to_vertex_tuple(e)?;
+        let pts = self.geometry();
+        let x1 = pts[2*i1+0];
+        let y1 = pts[2*i1+1];
+        let x2 = pts[2*i2+0];
+        let y2 = pts[2*i2+1];
+        Ok(( (x1,y1), (x2,y2) ))
+    }
+
+    fn geometry(&self) ->  Box<[f64]> {
+        let angle_in_radians = self.angle as f64 * std::f64::consts::PI / 180.;
+        let c = angle_in_radians.cos();
+        let s = angle_in_radians.sin();
+        let s5 = 5_f64.sqrt();
+        let x2 = 0.15450849718747367;
+        let x3 = 1.4635254915624212;
+        let y2 = 0.4755282581475767;
+
+        let mut boxed_arr = Box::new([0.; 8]);
+        boxed_arr[2*0+0] = self.cx + c*(-x3) - s*(-y2);
+        boxed_arr[2*0+1] = self.cy + s*(-x3) + c*(-y2);
+
+        boxed_arr[2*1+0] = self.cx + c*( x2) - s*(-y2);
+        boxed_arr[2*1+1] = self.cy + s*( x2) + c*(-y2);
+
+        boxed_arr[2*2+0] = self.cx + c*( x3) - s*( y2);
+        boxed_arr[2*2+1] = self.cy + s*( x3) + c*( y2);
+
+        boxed_arr[2*3+0] = self.cx + c*(-x2) - s*( y2);
+        boxed_arr[2*3+1] = self.cy + s*(-x2) + c*( y2);
+
+        boxed_arr
+    }
+
+    pub fn get_edges(&self) -> Vec<Edge> {
+        let mut result = Vec::new();
+        for i in 1..5 {
+            let mut e = Edge { center: (0., 0.), angle: 0, length: EdgeLength::SHORT };
+            match self.edge_center(i) {
+                Ok(c) => e.center = c,
+                Err(_) => continue,
+            }
+            match self.edge_angle(i) {
+                Ok(a) => e.angle = a,
+                Err(_) => continue,
+            }
+            match self.edge_length(i) {
+                Ok(l) => e.length = l,
+                Err(_) => continue,
+            }
+            result.push(e);
+        }
+        result
+    }
+
+    pub fn get_big_arc(&self) -> Arc {
+        let s5 = 5_f64.sqrt();
+        let phi = (1.+s5)/2.;
+        let pts = self.geometry();
+        let ci = 1;
+        let cx = pts[2*ci+0];
+        let cy = pts[2*ci+1];
+        return Arc {
+            center: (cx, cy),
+            radius: phi - 1.25,
+            start_angle: (self.angle + 36)%360,
+            end_angle: (self.angle + 180)%360,
+        }
+    }
+
+    pub fn get_small_arc(&self) -> Arc {
+        let s5 = 5_f64.sqrt();
+        let phi = (1.+s5)/2.;
+        let pts = self.geometry();
+        let ci = 3;
+        let cx = pts[2*ci+0];
+        let cy = pts[2*ci+1];
+        return Arc {
+            center: (cx, cy),
+            radius: 0.375,
+            start_angle: (self.angle + 216)%360,
+            end_angle: (self.angle + 0)%360,
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -1026,3 +1341,4 @@ mod tests {
         }
     }
 }
+

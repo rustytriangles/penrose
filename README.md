@@ -10,6 +10,7 @@ of those tiles looks like this:
 
 ### Commands
 * A - Toggle arcs
+* B - Toggle Ammann bars
 * C - Clear
 * D - Use Dart tile
 * E - Toggle edges
