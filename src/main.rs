@@ -13,14 +13,24 @@ struct DrawProps {
     edge_color: nannou::color::Srgb<u8>,
     arc1_color: nannou::color::Srgb<u8>,
     arc2_color: nannou::color::Srgb<u8>,
+    bar_color: nannou::color::Srgb<u8>,
     edge_weight: f32,
     show_arcs: bool,
+    show_bars: bool,
 }
 
 trait Drawable {
     fn draw(&self, draw: &nannou::draw::Draw, xoff: f32, yoff: f32, scale: f32, props: &DrawProps);
     fn append_to_vector(&self, dst: &mut Vec<Box<dyn Drawable>>, dx: f64, dy: f64);
     fn get_drawable_edges(&self) -> Vec<Edge>;
+    fn get_ammann_bars(&self, xoff: f32, yoff: f32, scale: f32) -> Vec<(f32,f32)>;
+}
+
+fn interpolate(p1: (f32,f32), p2: (f32,f32), t: f64) -> (f32,f32) {
+    return (
+        (p1.0 as f64 + t * ( p2.0 as f64 - p1.0 as f64)) as f32,
+        (p1.1 as f64 + t * ( p2.1 as f64 - p1.1 as f64)) as f32
+    )
 }
 
 impl Drawable for Dart {
@@ -62,6 +72,16 @@ impl Drawable for Dart {
                 .stroke_weight(2.)
                 .points(arc_points);
         }
+
+        if (props.show_bars) {
+            let a = self.get_ammann_bars(xoff, yoff, scale);
+            for i in (0..a.len()).step_by(2) {
+                draw.line()
+                    .start(pt2(a[i].0, a[i].1))
+                    .end(pt2(a[i+1].0, a[i+1].1))
+                    .color(props.bar_color);
+            }
+        }
     }
 
     fn append_to_vector(&self, dst: &mut Vec<Box<dyn Drawable>>, dx: f64, dy: f64) {
@@ -74,6 +94,28 @@ impl Drawable for Dart {
 
     fn get_drawable_edges(&self) -> Vec<Edge> {
         self.get_edges()
+    }
+
+    fn get_ammann_bars(&self, xoff: f32, yoff: f32, scale: f32) -> Vec<(f32,f32)> {
+        let s5 = 5_f64.sqrt();
+        let t1 = 1. / 4.;
+        let t2 = 1. / (3. + s5);
+        let t3 = (1. + s5) / 4.;
+
+        let p = self.polygon(xoff, yoff, scale);
+        let a0 = interpolate(p[1], p[0], t3);
+        let a1 = interpolate(p[1], p[0], t1);
+        let a2 = interpolate(p[1], p[2], t2);
+        let a3 = interpolate(p[3], p[2], t2);
+        let a4 = interpolate(p[3], p[0], t1);
+        let a5 = interpolate(p[3], p[0], t3);
+
+        let mut result = Vec::new();
+        result.push(a1); result.push(a2);
+        result.push(a2); result.push(a0);
+        result.push(a5); result.push(a3);
+        result.push(a3); result.push(a4);
+        return result
     }
 }
 
@@ -119,6 +161,16 @@ impl Drawable for Kite {
                 .stroke_weight(2.)
                 .points(arc_points);
         }
+
+        if (props.show_bars) {
+            let a = self.get_ammann_bars(xoff, yoff, scale);
+            for i in (0..a.len()).step_by(2) {
+                draw.line()
+                    .start(pt2(a[i].0, a[i].1))
+                    .end(pt2(a[i+1].0, a[i+1].1))
+                    .color(props.bar_color);
+            }
+        }
     }
 
     fn append_to_vector(&self, dst: &mut Vec<Box<dyn Drawable>>, dx: f64, dy: f64) {
@@ -131,6 +183,25 @@ impl Drawable for Kite {
 
     fn get_drawable_edges(&self) -> Vec<Edge> {
         self.get_edges()
+    }
+
+    fn get_ammann_bars(&self, xoff: f32, yoff: f32, scale: f32) -> Vec<(f32,f32)> {
+        let s5 = 5_f64.sqrt();
+        let t1 = 1. / 4.;
+        let t2 = 1. / (3. + s5);
+
+        let p = self.polygon(xoff, yoff, scale);
+        let r0 = interpolate(p[0], p[1], t2);
+        let r3 = interpolate(p[2], p[1], t1);
+        let r4 = interpolate(p[2], p[3], t1);
+        let r7 = interpolate(p[0], p[3], t2);
+
+        let mut result = Vec::new();
+        result.push(r3); result.push(r7);
+        result.push(r7); result.push(r0);
+        result.push(r0); result.push(r4);
+
+        return result
     }
 }
 
@@ -290,6 +361,7 @@ struct Model {
     current_point: Point2,
     show_edges: bool,
     show_arcs: bool,
+    show_bars: bool,
     scale: f64,
     debug: bool,
     next_tile: penrose::Tile,
@@ -330,6 +402,7 @@ fn model(app: &App) -> Model {
             current_point: pt2(0.,0.),
             show_edges: true,
             show_arcs: true,
+            show_bars: false,
             scale: 25.,
             debug: false,
             next_tile: penrose::Tile::DART,
@@ -498,8 +571,10 @@ fn view(app: &App, model: &Model, frame: Frame) {
         edge_color: LAVENDER,
         arc1_color: LIGHTPINK,
         arc2_color: PALEGREEN,
+        bar_color: LIGHTSTEELBLUE,
         edge_weight: if model.show_edges { 2. } else { 0. },
         show_arcs: model.show_arcs,
+        show_bars: model.show_bars,
     };
 
     let drag_props = DrawProps {
@@ -508,8 +583,10 @@ fn view(app: &App, model: &Model, frame: Frame) {
         edge_color: PINK,
         arc1_color: LIGHTPINK,
         arc2_color: PALEGREEN,
+        bar_color: LIGHTSTEELBLUE,
         edge_weight: 0.,
         show_arcs: model.show_arcs,
+        show_bars: false,
     };
 
     let snap_props = DrawProps {
@@ -518,8 +595,10 @@ fn view(app: &App, model: &Model, frame: Frame) {
         edge_color: PINK,
         arc1_color: LIGHTPINK,
         arc2_color: PALEGREEN,
+        bar_color: LIGHTSTEELBLUE,
         edge_weight: 0.,
         show_arcs: model.show_arcs,
+        show_bars: false,
     };
 
     // Draw the tiles
@@ -574,6 +653,7 @@ fn window_event(_app: &App, model: &mut Model, event: WindowEvent) {
                 // Key::Key6 => model.vertex_type = 6,
                 // Key::Key7 => model.vertex_type = 7,
                 Key::A => model.show_arcs = !model.show_arcs,
+                Key::B => model.show_bars = !model.show_bars,
                 Key::C => { model.tiles = Vec::new(); model.edges = Vec::new(); },
                 Key::D => model.next_tile = penrose::Tile::DART,
                 Key::E => model.show_edges = !model.show_edges,
