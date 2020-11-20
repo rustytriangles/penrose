@@ -247,6 +247,13 @@ impl Drawable for Skinny {
         }
 
         if (props.show_bars) {
+            let a = self.get_ammann_bars(xoff, yoff, scale);
+            for i in (0..a.len()).step_by(2) {
+                draw.line()
+                    .start(pt2(a[i].0, a[i].1))
+                    .end(pt2(a[i+1].0, a[i+1].1))
+                    .color(props.bar_color);
+            }
         }
     }
 
@@ -263,8 +270,21 @@ impl Drawable for Skinny {
     }
 
     fn get_ammann_bars(&self, xoff: f32, yoff: f32, scale: f32) -> Vec<(f32,f32)> {
+        let s5 = 5_f64.sqrt();
+        let t1 = 1. / 4.;
+        let x2 = (s5 - 1.0) / 8.0;
+        let x3 = (5.0 + 3.0 * s5) / 8.0;
+        let t4 = (1. - t1) * (x3 + x2) / (x3 - x2);
+
+        let p = self.polygon(xoff, yoff, scale);
+        let a0 = interpolate(p[3], p[0], t1);
+        let a1 = interpolate(p[0], p[1], t4);
+        let a2 = interpolate(p[2], p[1], t4);
+        let a3 = interpolate(p[3], p[2], t1);
 
         let mut result = Vec::new();
+        result.push(a0); result.push(a1);
+        result.push(a2); result.push(a3);
 
         return result
     }
@@ -312,6 +332,13 @@ impl Drawable for Fat {
         }
 
         if (props.show_bars) {
+            let a = self.get_ammann_bars(xoff, yoff, scale);
+            for i in (0..a.len()).step_by(2) {
+                draw.line()
+                    .start(pt2(a[i].0, a[i].1))
+                    .end(pt2(a[i+1].0, a[i+1].1))
+                    .color(props.bar_color);
+            }
         }
     }
 
@@ -328,8 +355,20 @@ impl Drawable for Fat {
     }
 
     fn get_ammann_bars(&self, xoff: f32, yoff: f32, scale: f32) -> Vec<(f32,f32)> {
+        let s5 = 5_f64.sqrt();
+        let t1 = 1. / 4.;
+        let t2 = 1. / (3. + s5);
+        let t3 = (1. + s5) / 4.;
+
+        let p = self.polygon(xoff, yoff, scale);
+        let a0 = interpolate(p[2], p[1], t3);
+        let a1 = interpolate(p[2], p[1], t1);
+        let a2 = interpolate(p[2], p[3], t1);
+        let a3 = interpolate(p[2], p[3], t3);
 
         let mut result = Vec::new();
+        result.push(a0); result.push(a2);
+        result.push(a1); result.push(a3);
 
         return result
     }

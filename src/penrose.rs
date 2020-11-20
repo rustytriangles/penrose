@@ -682,9 +682,9 @@ impl Skinny {
         let c = angle_in_radians.cos();
         let s = angle_in_radians.sin();
         let s5 = 5_f64.sqrt();
-        let x2 = 0.15450849718747367;
-        let x3 = 1.4635254915624212;
-        let y2 = 0.4755282581475767;
+        let x2 = (s5 - 1.0) / 8.0;
+        let x3 = (5.0 + 3.0 * s5) / 8.0;
+        let y2 = 0.4755282581475767; //
 
         let mut boxed_arr = Box::new([0.; 8]);
         boxed_arr[2*0+0] = self.cx + c*(-x3) - s*(-y2);
