@@ -544,6 +544,7 @@ fn snap_tolerance(scale: f64) -> f64 {
 }
 
 fn model(app: &App) -> Model {
+    app.set_exit_on_escape(false);
     app.new_window()
         .size(720, 720)
         .event(window_event)
