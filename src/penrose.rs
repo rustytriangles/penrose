@@ -684,7 +684,7 @@ impl Skinny {
         let s5 = 5_f64.sqrt();
         let x2 = (s5 - 1.0) / 8.0;
         let x3 = (5.0 + 3.0 * s5) / 8.0;
-        let y2 = 0.4755282581475767; //
+        let y2 = (std::f64::consts::PI / 5.0).cos() * (std::f64::consts::PI / 5.0).sin();
 
         let mut boxed_arr = Box::new([0.; 8]);
         boxed_arr[2*0+0] = self.cx + c*(-x3) - s*(-y2);
